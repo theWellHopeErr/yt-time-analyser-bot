@@ -1,11 +1,14 @@
 from os.path import isfile, join
+from pickle import TRUE
 from dotenv import load_dotenv
 from os import listdir
 from tqdm import tqdm
 import pytesseract
 import numpy as np
+import pandas as pd
 import json
 import cv2
+import csv
 import re
 import os
 
@@ -15,15 +18,13 @@ PYTESSERACT_DIR = os.getenv('PYTESSERACT_DIR')
 pytesseract.pytesseract.tesseract_cmd = PYTESSERACT_DIR
 
 
-'''
-## find_valid_date(int, int, int) -> (int, int, int)
-# Given a date, month and year, the method returns the same if it is valid, else returns the previous valid date
-# Ex 00: find_valid_date(2,1,2022) => (2,1,2022)
-# Ex 01: find_valid_date(-2,1,2022) => (29,12,2021)
-# '''
-
-
 def find_valid_date(date, month, year):
+    '''
+        # find_valid_date(int, int, int) -> (int, int, int)
+        #    Given a date, month and year, the method returns the same if it is valid, else returns the previous valid date
+        #    Ex 00: find_valid_date(2,1,2022) => (2,1,2022)
+        #    Ex 01: find_valid_date(-2,1,2022) => (29,12,2021)
+    '''
     if date < 1:
         if month == 2 or month == 4 or month == 6 or month == 9 or month == 11:
             date += 31
@@ -51,13 +52,11 @@ def find_valid_date(date, month, year):
     return (date, month, year)
 
 
-'''
-## find_tot_minutes(numpy.ndarray) -> float
-# Given an image ndarray, this method extracts the text in image and returns the Y-Axis max time from the chart
-# '''
-
-
 def find_tot_minutes(img):
+    '''
+        # find_tot_minutes(numpy.ndarray) -> float
+        #    Given an image ndarray, this method extracts the text in image and returns the Y-Axis max time from the chart
+    '''
     text = pytesseract.image_to_string(img)
     for i in range(6, 9):
         time = text.split('\n')[i]
@@ -71,29 +70,32 @@ def find_tot_minutes(img):
             return float(mins[0])
 
 
-'''
-## write_into_jsaon(dictionary) -> None
-# Writes the dictionary parameter into a JSON file
-# '''
-
-
 def write_into_json(data):
+    '''
+        # write_into_jsaon(dictionary) -> None
+        #    Writes the dictionary parameter into a JSON file
+    '''
     print('-> Writing data into data.json file...')
     json_dump = json.dumps(data)
     open('data.json', 'w').write(json_dump)
-    print('==> Data written successfully')
-
-
-'''
-## write_into_csv(dictionary):
-# Flattens the dictionary parameter and writes it into a CSV file
-# '''
+    print('==> Data written into data.json successfully')
 
 
 def write_into_csv(data):
+    '''
+        # write_into_csv(dictionary):
+        #    Flattens the dictionary parameter and writes it into a CSV file
+    '''
     print('-> Writing data into data.csv file...')
 
-    print('==> Data written successfully')
+    data_csv = pd.json_normalize(data, sep='-').to_dict(orient='records')[0]
+
+    with open('data.csv', 'w', newline='') as csv_file:
+        writer = csv.writer(csv_file)
+        for key, value in data_csv.items():
+            writer.writerow([key, value])
+
+    print('==> Data written into data.csv successfully')
 
 
 def main():

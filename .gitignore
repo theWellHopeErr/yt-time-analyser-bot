@@ -1,5 +1,4 @@
 charts/*
-!charts/.gitkeep 
 .env
 data.json
 data.csv
